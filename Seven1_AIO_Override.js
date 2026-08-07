@@ -8,6 +8,11 @@ const F1_TV_RULESET_URL =
   "https://raw.githubusercontent.com/vxiaov/vClash/5294957bd48ff61e71938cfd1f68cfe2e44b8acb/clash/clash/ruleset/F1_TV";
 const F1_TV_ICON_URL =
   "https://raw.githubusercontent.com/hengruili2000/clash_rule/main/icon/Formula1.png";
+const FINANCE_GROUP = "金融服务";
+const FINANCE_RULESET_URL =
+  "https://raw.githubusercontent.com/hengruili2000/Custom_OpenClash_Rules/refs/heads/main/rule/Custom_US_Proxy.yaml";
+const FINANCE_ICON_URL =
+  "https://raw.githubusercontent.com/hengruili2000/clash_rule/main/icon/Finance.png";
 
 function main(config) {
   if (!config || typeof config !== "object" || Array.isArray(config)) {
@@ -57,7 +62,10 @@ function main(config) {
 
   // F1 TV uses only the three explicitly requested US strategies.
   const proxyGroups = Array.isArray(config["proxy-groups"])
-    ? config["proxy-groups"].filter((group) => group?.name !== F1_TV_GROUP)
+    ? config["proxy-groups"].filter(
+        (group) =>
+          group?.name !== F1_TV_GROUP && group?.name !== FINANCE_GROUP,
+      )
     : [];
   const f1TvGroup = {
     name: F1_TV_GROUP,
@@ -70,6 +78,20 @@ function main(config) {
     disneyIndex >= 0 ? disneyIndex + 1 : proxyGroups.length,
     0,
     f1TvGroup,
+  );
+
+  // Mirror Disney's complete strategy configuration and place Finance after PayPal.
+  const disneyGroup = proxyGroups.find((group) => group?.name === "Disney");
+  const financeGroup = {
+    ...(disneyGroup || { type: "select", proxies: ["一键代理"] }),
+    name: FINANCE_GROUP,
+    icon: FINANCE_ICON_URL,
+  };
+  const paypalIndex = proxyGroups.findIndex((group) => group?.name === "PayPal");
+  proxyGroups.splice(
+    paypalIndex >= 0 ? paypalIndex + 1 : proxyGroups.length,
+    0,
+    financeGroup,
   );
   config["proxy-groups"] = proxyGroups;
 
@@ -87,16 +109,30 @@ function main(config) {
     interval: 86400,
     url: F1_TV_RULESET_URL,
   };
+  ruleProviders.Custom_US_Proxy = {
+    type: "http",
+    behavior: "classical",
+    format: "yaml",
+    interval: 86400,
+    url: FINANCE_RULESET_URL,
+  };
   config["rule-providers"] = ruleProviders;
 
-  // Put the specific F1 rule before broad rules such as geolocation-!cn.
+  // Put specific service rules before broad rules such as geolocation-!cn.
   const rules = Array.isArray(config.rules)
     ? config.rules.filter(
         (rule) =>
-          typeof rule !== "string" || !rule.startsWith("RULE-SET,F1_TV,"),
+          typeof rule !== "string" ||
+          (!rule.startsWith("RULE-SET,F1_TV,") &&
+            !rule.startsWith("RULE-SET,Custom_US_Proxy,") &&
+            !rule.toLowerCase().startsWith("geosite,ibkr,")),
       )
     : [];
-  rules.unshift(`RULE-SET,F1_TV,${F1_TV_GROUP}`);
+  rules.unshift(
+    `RULE-SET,F1_TV,${F1_TV_GROUP}`,
+    `RULE-SET,Custom_US_Proxy,${FINANCE_GROUP}`,
+    `GEOSITE,ibkr,${FINANCE_GROUP}`,
+  );
   config.rules = rules;
 
   return config;
