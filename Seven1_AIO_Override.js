@@ -59,12 +59,18 @@ function main(config) {
   const proxyGroups = Array.isArray(config["proxy-groups"])
     ? config["proxy-groups"].filter((group) => group?.name !== F1_TV_GROUP)
     : [];
-  proxyGroups.push({
+  const f1TvGroup = {
     name: F1_TV_GROUP,
     type: "select",
     proxies: ["美国-手动", "美国-故转", "美国-自动"],
     icon: F1_TV_ICON_URL,
-  });
+  };
+  const disneyIndex = proxyGroups.findIndex((group) => group?.name === "Disney");
+  proxyGroups.splice(
+    disneyIndex >= 0 ? disneyIndex + 1 : proxyGroups.length,
+    0,
+    f1TvGroup,
+  );
   config["proxy-groups"] = proxyGroups;
 
   // The supplied ruleset is a YAML payload containing classical rules.
