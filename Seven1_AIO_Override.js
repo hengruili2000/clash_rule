@@ -3,6 +3,11 @@
 const SUBSCRIPTION_URL = "http://127.0.0.1:38324/download/AIO";
 const PROVIDER_NAME = "AIO";
 const ADDITIONAL_PREFIX = "[AIO] ";
+const F1_TV_GROUP = "F1 TV";
+const F1_TV_RULESET_URL =
+  "https://raw.githubusercontent.com/vxiaov/vClash/5294957bd48ff61e71938cfd1f68cfe2e44b8acb/clash/clash/ruleset/F1_TV";
+const F1_TV_ICON_URL =
+  "https://raw.githubusercontent.com/hengruili2000/clash_rule/main/icon/Formula1.png";
 
 function main(config) {
   if (!config || typeof config !== "object" || Array.isArray(config)) {
@@ -49,6 +54,44 @@ function main(config) {
   }
   nextProviders[PROVIDER_NAME] = aioProvider;
   config["proxy-providers"] = nextProviders;
+
+  // F1 TV uses only the three explicitly requested US strategies.
+  const proxyGroups = Array.isArray(config["proxy-groups"])
+    ? config["proxy-groups"].filter((group) => group?.name !== F1_TV_GROUP)
+    : [];
+  proxyGroups.push({
+    name: F1_TV_GROUP,
+    type: "select",
+    proxies: ["美国-手动", "美国-故转", "美国-自动"],
+    icon: F1_TV_ICON_URL,
+  });
+  config["proxy-groups"] = proxyGroups;
+
+  // The supplied ruleset is a YAML payload containing classical rules.
+  const ruleProviders =
+    config["rule-providers"] &&
+    typeof config["rule-providers"] === "object" &&
+    !Array.isArray(config["rule-providers"])
+      ? config["rule-providers"]
+      : {};
+  ruleProviders.F1_TV = {
+    type: "http",
+    behavior: "classical",
+    format: "yaml",
+    interval: 86400,
+    url: F1_TV_RULESET_URL,
+  };
+  config["rule-providers"] = ruleProviders;
+
+  // Put the specific F1 rule before broad rules such as geolocation-!cn.
+  const rules = Array.isArray(config.rules)
+    ? config.rules.filter(
+        (rule) =>
+          typeof rule !== "string" || !rule.startsWith("RULE-SET,F1_TV,"),
+      )
+    : [];
+  rules.unshift(`RULE-SET,F1_TV,${F1_TV_GROUP}`);
+  config.rules = rules;
 
   return config;
 }
