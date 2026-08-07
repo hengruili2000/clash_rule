@@ -13,6 +13,8 @@ const FINANCE_RULESET_URL =
   "https://raw.githubusercontent.com/hengruili2000/Custom_OpenClash_Rules/refs/heads/main/rule/Custom_US_Proxy.yaml";
 const FINANCE_ICON_URL =
   "https://raw.githubusercontent.com/hengruili2000/clash_rule/main/icon/Finance.png";
+const TINDER_RULESET_URL =
+  "https://raw.githubusercontent.com/madi10/MANTANKODE/f75b7d020f819aa54a8f5df57562364b1ef513b7/ClashForAndroid/Tinder.yaml";
 
 function main(config) {
   if (!config || typeof config !== "object" || Array.isArray(config)) {
@@ -116,6 +118,13 @@ function main(config) {
     interval: 86400,
     url: FINANCE_RULESET_URL,
   };
+  ruleProviders.Tinder = {
+    type: "http",
+    behavior: "classical",
+    format: "yaml",
+    interval: 86400,
+    url: TINDER_RULESET_URL,
+  };
   config["rule-providers"] = ruleProviders;
 
   // Put specific service rules before broad rules such as geolocation-!cn.
@@ -125,6 +134,7 @@ function main(config) {
           typeof rule !== "string" ||
           (!rule.startsWith("RULE-SET,F1_TV,") &&
             !rule.startsWith("RULE-SET,Custom_US_Proxy,") &&
+            !rule.startsWith("RULE-SET,Tinder,") &&
             !rule.toLowerCase().startsWith("geosite,ibkr,")),
       )
     : [];
@@ -132,6 +142,7 @@ function main(config) {
     `RULE-SET,F1_TV,${F1_TV_GROUP}`,
     `RULE-SET,Custom_US_Proxy,${FINANCE_GROUP}`,
     `GEOSITE,ibkr,${FINANCE_GROUP}`,
+    "RULE-SET,Tinder,Twitter(X)",
   );
   config.rules = rules;
 
