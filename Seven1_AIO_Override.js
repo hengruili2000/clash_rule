@@ -21,6 +21,180 @@ function main(config) {
     throw new Error("覆写失败：Clash 配置不是有效对象");
   }
 
+  // Apply client, listener, sniffer, and DNS settings with YAML-style deep merge.
+  Object.assign(config, {
+    port: 7890,
+    "socks-port": 7891,
+    "redir-port": 7892,
+    "mixed-port": 7893,
+    "allow-lan": false,
+    mode: "rule",
+    "log-level": "info",
+    "external-controller": "127.0.0.1:9090",
+    "unified-delay": true,
+    ipv6: false,
+  });
+
+  const currentSniffer =
+    config.sniffer &&
+    typeof config.sniffer === "object" &&
+    !Array.isArray(config.sniffer)
+      ? config.sniffer
+      : {};
+  const currentSniff =
+    currentSniffer.sniff &&
+    typeof currentSniffer.sniff === "object" &&
+    !Array.isArray(currentSniffer.sniff)
+      ? currentSniffer.sniff
+      : {};
+  config.sniffer = {
+    ...currentSniffer,
+    sniff: {
+      ...currentSniff,
+      TLS: { ports: [443], "override-destination": true },
+      HTTP: { ports: [443], "override-destination": true },
+    },
+    enable: true,
+    "parse-pure-ip": false,
+    "force-dns-mapping": true,
+    "override-destination": true,
+  };
+
+  const currentAndroid =
+    config["clash-for-android"] &&
+    typeof config["clash-for-android"] === "object" &&
+    !Array.isArray(config["clash-for-android"])
+      ? config["clash-for-android"]
+      : {};
+  config["clash-for-android"] = {
+    ...currentAndroid,
+    "append-system-dns": false,
+  };
+
+  const currentProfile =
+    config.profile &&
+    typeof config.profile === "object" &&
+    !Array.isArray(config.profile)
+      ? config.profile
+      : {};
+  config.profile = { ...currentProfile, tracing: true };
+
+  const currentExperimental =
+    config.experimental &&
+    typeof config.experimental === "object" &&
+    !Array.isArray(config.experimental)
+      ? config.experimental
+      : {};
+  config.experimental = {
+    ...currentExperimental,
+    "sniff-tls-sni": true,
+  };
+
+  const currentDns =
+    config.dns && typeof config.dns === "object" && !Array.isArray(config.dns)
+      ? config.dns
+      : {};
+  config.dns = {
+    ...currentDns,
+    enable: true,
+    ipv6: false,
+    listen: "127.0.0.1:7874",
+    "use-hosts": true,
+    "use-system-hosts": false,
+    nameserver: [
+      "119.29.29.29",
+      "223.5.5.5",
+      "tls://119.29.29.29",
+      "tls://223.5.5.5",
+      "https://dns.pub/dns-query",
+      "https://dns.alidns.com/dns-query",
+    ],
+    "proxy-server-nameserver": ["udp://127.0.0.1:7874"],
+    "fake-ip-range": "198.18.0.0/15",
+    "fake-ip-filter": [
+      "*.lan",
+      "*.localdomain",
+      "*.example",
+      "*.invalid",
+      "*.localhost",
+      "*.test",
+      "*.local",
+      "*.home.arpa",
+      "time.*.com",
+      "time.*.gov",
+      "time.*.edu.cn",
+      "time.*.apple.com",
+      "time1.*.com",
+      "time2.*.com",
+      "time3.*.com",
+      "time4.*.com",
+      "time5.*.com",
+      "time6.*.com",
+      "time7.*.com",
+      "ntp.*.com",
+      "ntp1.*.com",
+      "ntp2.*.com",
+      "ntp3.*.com",
+      "ntp4.*.com",
+      "ntp5.*.com",
+      "ntp6.*.com",
+      "ntp7.*.com",
+      "*.time.edu.cn",
+      "*.ntp.org.cn",
+      "+.pool.ntp.org",
+      "time1.cloud.tencent.com",
+      "stun.*.*",
+      "stun.*.*.*",
+      "swscan.apple.com",
+      "mesu.apple.com",
+      "music.163.com",
+      "*.music.163.com",
+      "*.126.net",
+      "musicapi.taihe.com",
+      "music.taihe.com",
+      "songsearch.kugou.com",
+      "trackercdn.kugou.com",
+      "*.kuwo.cn",
+      "api-jooxtt.sanook.com",
+      "api.joox.com",
+      "y.qq.com",
+      "*.y.qq.com",
+      "streamoc.music.tc.qq.com",
+      "mobileoc.music.tc.qq.com",
+      "isure.stream.qqmusic.qq.com",
+      "dl.stream.qqmusic.qq.com",
+      "aqqmusic.tc.qq.com",
+      "amobile.music.tc.qq.com",
+      "localhost.ptlogin2.qq.com",
+      "*.msftconnecttest.com",
+      "*.msftncsi.com",
+      "*.xiami.com",
+      "*.music.migu.cn",
+      "music.migu.cn",
+      "+.wotgame.cn",
+      "+.wggames.cn",
+      "+.wowsgame.cn",
+      "+.wargaming.net",
+      "*.*.*.srv.nintendo.net",
+      "*.*.stun.playstation.net",
+      "xbox.*.*.microsoft.com",
+      "*.*.xboxlive.com",
+      "*.ipv6.microsoft.com",
+      "teredo.*.*.*",
+      "teredo.*.*",
+      "speedtest.cros.wr.pvp.net",
+      "+.jjvip8.com",
+      "www.douyu.com",
+      "activityapi.huya.com",
+      "activityapi.huya.com.w.cdngslb.com",
+      "www.bilibili.com",
+      "api.bilibili.com",
+      "a.w.bilicdn1.com",
+      "+.apt-agent.com",
+    ],
+    "enhanced-mode": "fake-ip",
+  };
+
   const providers =
     config["proxy-providers"] &&
     typeof config["proxy-providers"] === "object" &&
