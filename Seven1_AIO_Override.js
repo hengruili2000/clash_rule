@@ -1,4 +1,4 @@
-// Clash Party JavaScript override for Seven1_fallback_Rule-Set.yaml.
+// Clash Party JavaScript override for Seven1_fallback_Geo.yaml.
 // Update the constants below if the local subscription endpoint or label changes.
 const SUBSCRIPTION_URL = "http://127.0.0.1:38324/download/AIO";
 const PROVIDER_NAME = "AIO";
@@ -95,7 +95,7 @@ function main(config) {
   );
   config["proxy-groups"] = proxyGroups;
 
-  // The supplied ruleset is a YAML payload containing classical rules.
+  // The supplied rule providers use YAML payloads with classical rules.
   const ruleProviders =
     config["rule-providers"] &&
     typeof config["rule-providers"] === "object" &&
@@ -118,22 +118,36 @@ function main(config) {
   };
   config["rule-providers"] = ruleProviders;
 
-  // Put specific service rules before broad rules such as geolocation-!cn.
-  const rules = Array.isArray(config.rules)
-    ? config.rules.filter(
-        (rule) =>
-          typeof rule !== "string" ||
-          (!rule.startsWith("RULE-SET,F1_TV,") &&
-            !rule.startsWith("RULE-SET,Custom_US_Proxy,") &&
-            !rule.toLowerCase().startsWith("geosite,ibkr,")),
-      )
-    : [];
-  rules.unshift(
+  // Insert specific service rules before the broad non-CN fallback.
+  const rules = Array.isArray(config.rules) ? config.rules.slice() : [];
+  const serviceRules = [
     `RULE-SET,F1_TV,${F1_TV_GROUP}`,
     `RULE-SET,Custom_US_Proxy,${FINANCE_GROUP}`,
     `GEOSITE,ibkr,${FINANCE_GROUP}`,
+  ];
+  const filteredRules = rules.filter(
+    (rule) =>
+      typeof rule !== "string" ||
+      (!rule.startsWith("RULE-SET,F1_TV,") &&
+        !rule.startsWith("RULE-SET,Custom_US_Proxy,") &&
+        !rule.toLowerCase().startsWith("geosite,ibkr,")),
   );
-  config.rules = rules;
+  const broadRuleIndex = filteredRules.findIndex(
+    (rule) =>
+      typeof rule === "string" &&
+      rule.startsWith("GEOSITE,geolocation-!cn,"),
+  );
+  const matchRuleIndex = filteredRules.findIndex(
+    (rule) => typeof rule === "string" && rule.startsWith("MATCH,"),
+  );
+  const insertIndex =
+    broadRuleIndex >= 0
+      ? broadRuleIndex
+      : matchRuleIndex >= 0
+        ? matchRuleIndex
+        : filteredRules.length;
+  filteredRules.splice(insertIndex, 0, ...serviceRules);
+  config.rules = filteredRules;
 
   return config;
 }
