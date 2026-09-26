@@ -135,7 +135,8 @@ function main(config) {
   const broadRuleIndex = filteredRules.findIndex(
     (rule) =>
       typeof rule === "string" &&
-      rule.startsWith("GEOSITE,geolocation-!cn,"),
+      (rule.startsWith("GEOSITE,geolocation-!cn,") ||
+        rule.startsWith("RULE-SET,geolocation-!cn,")),
   );
   const matchRuleIndex = filteredRules.findIndex(
     (rule) => typeof rule === "string" && rule.startsWith("MATCH,"),
