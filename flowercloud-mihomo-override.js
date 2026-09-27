@@ -115,11 +115,20 @@ function main(config) {
     Array.prototype.push.apply(groups, withoutOldPreferredGroup);
   }
 
-  // F1TV 组可手动选择 RFC provider、原有 Proxies 组或直连。
+  const hkProxyGroup = groups.find(function (group) {
+    return group && group.name === "HK";
+  });
+  if (hkProxyGroup) {
+    hkProxyGroup.type = "fallback";
+    hkProxyGroup.url = "https://www.gstatic.com/generate_204";
+    hkProxyGroup.interval = 300;
+  }
+
+  // F1TV 组可手动选择 US、RFC provider、原有 Proxies 组或直连。
   const f1Group = {
     name: "F1TV",
     type: "select",
-    proxies: ["Proxies", "DIRECT"],
+    proxies: ["US", "Proxies", "DIRECT"],
     use: [customProviderName]
   };
   config["proxy-groups"] = groups.filter(function (group) {
